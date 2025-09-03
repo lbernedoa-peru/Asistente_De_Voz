@@ -25,8 +25,4 @@ etiqueta = tk.Label(frame_principal, text="¡Hola! Bienvenido al asistente de vo
                     bg="#7289DA", fg="white", font=("Calibri", 12))
 etiqueta.pack(pady=20)
 """/.Esto es todo lo que conlleva el marco principal"""
-
-
-
-
 ventana_principal.mainloop()
