@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asistente de Voz - Clínica SaludPlus</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background-color: #f5f8fa;
+    }
+    .chat-box {
+      max-width: 600px;
+      margin: 40px auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      padding: 20px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+    }
+    .messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+    }
+    .message {
+      padding: 10px 15px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+    .message.bot {
+      background: #e9f3ff;
+      align-self: flex-start;
+    }
+    .message.user {
+      background: #0d6efd;
+      color: white;
+      align-self: flex-end;
+    }
+    #downloadPdf {
+      display: none;
+    }
+  </style>
+</head>
+<body onload="alert('🔊 Para activar el asistente de voz, menciona la palabra: ASISTENTE')">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">🏥 Clínica SaludPlus</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
+          <li class="nav-item"><a class="nav-link" href="asistente_manual.html">Reserva Manual</a></li>
+          <li class="nav-item"><a class="nav-link active" href="asistente_de_voz.html">Asistente de Voz</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Chat Asistente -->
+  <div class="chat-box">
+    <div class="messages" id="messages"></div>
+    <button id="downloadPdf" class="btn btn-success w-100">📥 Descargar Comprobante</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script>
+    const { jsPDF } = window.jspdf;
+    const messages = document.getElementById("messages");
+    const downloadBtn = document.getElementById("downloadPdf");
+
+    // Datos de la cita
+    let citaData = { 
+      especialidad: "", 
+      doctor: "", 
+      fecha: "", 
+      horario: "", 
+      nombre: "Juan",        // puedes cambiar o pedirlo por voz
+      apellidos: "Pérez",
+      telefono: "999888777",
+      correo: "juanperez@mail.com"
+    };
+    let paso = -1; // -1 esperando "asistente"
+
+    function addMessage(text, sender = "bot") {
+      const div = document.createElement("div");
+      div.classList.add("message", sender);
+      div.textContent = text;
+      messages.appendChild(div);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Reconocimiento de voz
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.start();
+
+    recognition.onresult = (event) => {
+      const text = event.results[event.results.length - 1][0].transcript.toLowerCase();
+      console.log("Dijiste:", text);
+
+      if (paso === -1) {
+        if (text.includes("asistente")) {
+          addMessage("👩‍⚕️ Hola, soy tu asistente. Dime qué especialidad necesitas para tu cita.", "bot");
+          paso = 0;
+        }
+        return;
+      }
+
+      addMessage(text, "user");
+
+      switch (paso) {
+        case 0:
+          citaData.especialidad = text;
+          addMessage(`✅ Perfecto, reservaremos en ${citaData.especialidad}. ¿Con qué doctor deseas atenderte?`, "bot");
+          paso++;
+          break;
+        case 1:
+          citaData.doctor = text;
+          addMessage(`📅 Muy bien, con el Dr. ${citaData.doctor}. ¿Qué fecha prefieres?`, "bot");
+          paso++;
+          break;
+        case 2:
+          citaData.fecha = text;
+          addMessage(`⏰ Anotado: ${citaData.fecha}. ¿A qué hora deseas tu cita?`, "bot");
+          paso++;
+          break;
+        case 3:
+          citaData.horario = text;
+          addMessage("✅ Listo, tu cita ha sido agendada con éxito.", "bot");
+          mostrarResumen();
+          paso++;
+          break;
+        default:
+          addMessage("🤔 Tu cita ya fue registrada. Si deseas otra, vuelve a decir 'asistente'.", "bot");
+          paso = -1;
+      }
+    };
+
+    function mostrarResumen() {
+      addMessage(
+        `📋 Resumen de tu cita:\nEspecialidad: ${citaData.especialidad}\nDoctor: ${citaData.doctor}\nFecha: ${citaData.fecha}\nHorario: ${citaData.horario}\nPaciente: ${citaData.nombre} ${citaData.apellidos}`,
+        "bot"
+      );
+      downloadBtn.style.display = "block";
+    }
+
+    // Descargar comprobante PDF
+    document.getElementById("downloadPdf").addEventListener("click", function() {
+      const doc = new jsPDF();
+
+      doc.setFontSize(16);
+      doc.text("🏥 Clínica SaludPlus", 20, 20);
+      doc.setFontSize(12);
+      doc.text("Comprobante de Reserva de Cita", 20, 30);
+
+      doc.setFontSize(11);
+      doc.text(`Especialidad: ${citaData.especialidad}`, 20, 50);
+      doc.text(`Doctor: ${citaData.doctor}`, 20, 60);
+      doc.text(`Fecha: ${citaData.fecha}`, 20, 70);
+      doc.text(`Horario: ${citaData.horario}`, 20, 80);
+      doc.text(`Paciente: ${citaData.nombre} ${citaData.apellidos}`, 20, 100);
+      doc.text(`Teléfono: ${citaData.telefono}`, 20, 110);
+      doc.text(`Correo: ${citaData.correo}`, 20, 120);
+
+      doc.setFontSize(10);
+      doc.text("Gracias por confiar en Clínica SaludPlus", 20, 140);
+
+      doc.save("comprobante_cita.pdf");
+    });
+  </script>
+</body>
+</html>
