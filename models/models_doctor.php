@@ -24,4 +24,19 @@ class Doctor {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function listarDoctores() {
+        $sql = "SELECT id_doctor, nombre, id_especialidad FROM doctores ORDER BY nombre";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function listarPorEspecialidad($idEspecialidad){
+    $sql = "SELECT id, nombre FROM doctores WHERE id_especialidad = :idEspecialidad";
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindParam(':idEspecialidad', $idEspecialidad, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }

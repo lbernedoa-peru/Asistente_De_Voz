@@ -6,56 +6,133 @@
   <meta charset="utf-8" />
   <title>Asistente de Voz - Clínica</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body{font-family:Arial, sans-serif;background:#f7f9fc;margin:0;padding:20px}
-    .container{max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.06)}
-    h1{margin-top:0}
-    #controls{margin:16px 0;display:flex;gap:8px}
-    button{padding:10px 14px;border-radius:6px;border:0;cursor:pointer}
-    button.primary{background:#0d6efd;color:white}
-    button.secondary{background:#6c757d;color:white}
-    #conversacion{background:#f1f5f9;padding:12px;border-radius:6px;min-height:160px;overflow:auto}
-    .mensaje{margin:6px 0}
-    .asistente{color:#0d6efd}
-    .usuario{color:#333}
-    .panel{margin-top:14px;display:flex;gap:12px;flex-wrap:wrap}
-    .card{background:#fff;padding:8px 10px;border-radius:6px;border:1px solid #e6edf3;cursor:pointer}
-    label{display:block;margin-top:10px}
-    input[type=text], input[type=date], input[type=time]{padding:8px;width:100%;box-sizing:border-box;border-radius:6px;border:1px solid #ddd}
-    .hidden{display:none}
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(to right, #e6f2ff, #f8fbff);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .container-box {
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      margin-top: 30px;
+      margin-bottom: 40px;
+    }
+    #conversacion {
+      background: #f1f7fc;
+      padding: 15px;
+      border-radius: 6px;
+      min-height: 160px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+    }
+    .mensaje { margin: 6px 0; }
+    .asistente { color: #0d6efd; font-weight: 500; }
+    .usuario { color: #333; }
+    .panel .card {
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .panel .card:hover {
+      transform: scale(1.05);
+      border-color: #0d6efd;
+    }
+    footer {
+      margin-top: auto;
+      background: #0d6efd;
+      color: #fff;
+      text-align: center;
+      padding: 15px 10px;
+    }
   </style>
 </head>
 <body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#"><i class="bi bi-hospital"></i> Clínica Asistente</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link " href="main.php"><i class="bi bi-house"></i> Inicio</a></li>
+          <li class="nav-item"><a class="nav-link active" href="index.php"><i class="bi bi-mic-fill"></i> Asistente</a></li>
+          <li class="nav-item"><a class="nav-link" href="formulario.php"><i class="bi bi-calendar-event"></i> Reserva de citas</a></li>
+          
+          <li class="nav-item"><a class="nav-link" href="ayuda.php"><i class="bi bi-info-circle"></i> Ayuda</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido -->
   <div class="container">
-    <h1>🎤 Asistente de Voz - Clínica</h1>
-    <p>Usa el asistente para agendar citas por voz. (Si tu navegador bloquea audio, usa los botones)</p>
+    <div class="container-box">
+      <h1 class="mb-3 text-primary"><i class="bi bi-mic"></i> Asistente de Voz - Clínica</h1>
+      <p class="text-muted">Usa el asistente para agendar citas por voz. Si tu navegador bloquea el audio, utiliza los botones o la entrada manual.</p>
 
-    <div id="controls">
-      <button id="startBtn" class="primary">▶ Iniciar asistente</button>
-      <button id="resetBtn">🔁 Reiniciar</button>
-      <button id="listenBtn" class="secondary">🎙️ Hablar</button>
-    </div>
+      <div id="controls" class="d-flex gap-2 my-3">
+        <button id="startBtn" class="btn btn-primary"><i class="bi bi-play-fill"></i> Iniciar asistente</button>
+        <button id="resetBtn" class="btn btn-outline-secondary"><i class="bi bi-arrow-repeat"></i> Reiniciar</button>
+        <button id="listenBtn" class="btn btn-secondary"><i class="bi bi-mic"></i> Hablar</button>
+      </div>
 
-    <div id="conversacion" aria-live="polite">
-    </div>
+      <div id="conversacion" aria-live="polite"></div>
 
-    <div class="panel" id="panelOpciones"></div>
+      <div class="panel row row-cols-1 row-cols-md-3 g-3 mt-3" id="panelOpciones"></div>
 
-    <div id="manualForm" class="hidden">
-      <h3>Entrada manual (fallback)</h3>
-      <label>DNI</label><input id="manualDni" type="text" placeholder="Ej: 12345678" />
-      <label>Nombre completo</label><input id="manualNombre" type="text" placeholder="Juan Perez" />
-      <label>Correo</label><input id="manualCorreo" type="text" placeholder="correo@ejemplo.com" />
-      <label>Teléfono</label><input id="manualTelefono" type="text" placeholder="999999999" />
-      <label>Fecha</label><input id="manualFecha" type="date" />
-      <label>Hora</label><input id="manualHora" type="time" />
-      <div style="margin-top:8px">
-        <button id="manualVerify" class="primary">Verificar / Registrar y Continuar</button>
+      <div id="manualForm" class="hidden mt-4">
+        <h3 class="h5 text-primary"><i class="bi bi-pencil-square"></i> Entrada manual (fallback)</h3>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">DNI</label>
+            <input id="manualDni" type="text" class="form-control" placeholder="12345678" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nombre completo</label>
+            <input id="manualNombre" type="text" class="form-control" placeholder="Juan Perez" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Correo</label>
+            <input id="manualCorreo" type="email" class="form-control" placeholder="correo@ejemplo.com" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Teléfono</label>
+            <input id="manualTelefono" type="text" class="form-control" placeholder="999999999" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fecha</label>
+            <input id="manualFecha" type="date" class="form-control" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Hora</label>
+            <input id="manualHora" type="time" class="form-control" />
+          </div>
+        </div>
+        <div class="mt-3">
+          <button id="manualVerify" class="btn btn-success"><i class="bi bi-check-circle"></i> Verificar / Registrar</button>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Footer -->
+  <footer>
+    <p class="mb-0">© 2025 Clínica Asistente | Desarrollado con <i class="bi bi-heart-fill text-danger"></i></p>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../public/app.js"></script>
 </body>
 </html>

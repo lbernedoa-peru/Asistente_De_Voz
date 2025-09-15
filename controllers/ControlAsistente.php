@@ -28,4 +28,5 @@ class ControlAsistente {
     public function agendarCita($id_paciente, $id_doctor, $fecha, $hora) {
         return $this->model->insertCita($id_paciente, $id_doctor, $fecha, $hora);
     }
+    
 }
