@@ -30,7 +30,7 @@
       background: #f1f7fc;
       padding: 15px;
       border-radius: 6px;
-      min-height: 160px;
+      min-height: 500px;
       max-height: 300px;
       overflow-y: auto;
       font-size: 0.95rem;
@@ -53,6 +53,8 @@
       text-align: center;
       padding: 15px 10px;
     }
+    .hidden { display: none; }
+
   </style>
 </head>
 <body>
@@ -110,14 +112,7 @@
             <label class="form-label">Teléfono</label>
             <input id="manualTelefono" type="text" class="form-control" placeholder="999999999" />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Fecha</label>
-            <input id="manualFecha" type="date" class="form-control" />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Hora</label>
-            <input id="manualHora" type="time" class="form-control" />
-          </div>
+
         </div>
         <div class="mt-3">
           <button id="manualVerify" class="btn btn-success"><i class="bi bi-check-circle"></i> Verificar / Registrar</button>

@@ -1,5 +1,5 @@
 <?php
-// models/Paciente.php
+// models/models_paciente.php
 require_once __DIR__ . '/../core/db.php';
 
 class Paciente {

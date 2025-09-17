@@ -1,5 +1,5 @@
 <?php
-// models/Especialidad.php
+// models/models_especialidad.php
 require_once __DIR__ . '/../core/db.php';
 
 class Especialidad {
@@ -15,4 +15,5 @@ class Especialidad {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
 }

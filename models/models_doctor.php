@@ -1,5 +1,5 @@
 <?php
-// models/Doctor.php
+// models/models_doctor.php
 require_once __DIR__ . '/../core/db.php';
 
 class Doctor {
@@ -31,12 +31,15 @@ class Doctor {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    
+    
     public function listarPorEspecialidad($idEspecialidad){
-    $sql = "SELECT id, nombre FROM doctores WHERE id_especialidad = :idEspecialidad";
-    $stmt = $this->db->prepare($sql);
-    $stmt->bindParam(':idEspecialidad', $idEspecialidad, PDO::PARAM_INT);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = $this->db->prepare("SELECT id, nombre FROM doctores WHERE id_especialidad = ?");
+        $stmt->bind_param("i", $idEspecialidad);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+    
 }
 
-}
