@@ -64,6 +64,7 @@
           <li class="nav-item"><a class="nav-link active" href="main.php"><i class="bi bi-house"></i> Inicio</a></li>
           <li class="nav-item"><a class="nav-link" href="index.php"><i class="bi bi-mic-fill"></i> Asistente</a></li>
           <li class="nav-item"><a class="nav-link" href="formulario.php"><i class="bi bi-calendar-event"></i> Reserva de citas</a></li>
+          <li class="nav-item"><a class="nav-link " href="registro.php"><i class="bi bi-person-plus"></i> Registro</a></li>
           <li class="nav-item"><a class="nav-link" href="ayuda.php"><i class="bi bi-info-circle"></i> Ayuda</a></li>
         </ul>
       </div>

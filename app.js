@@ -23,7 +23,7 @@ function verificarPaciente(dni) { return postToRouter({ accion: "verificarPacien
 function registrarPaciente(dni, nombre, correo, telefono) { return postToRouter({ accion: "registrarPaciente", dni, nombre, correo, telefono }); }
 function listarEspecialidades() { return postToRouter({ accion: "especialidades" }); }
 function listarDoctores(id_especialidad) { return postToRouter({ accion: "doctores", id_especialidad }); }
-function agendarCita(id_paciente, id_doctor, fecha, hora,estado) { return postToRouter({ accion: "agendarCita", id_paciente, id_doctor, fecha, hora , estado}); }
+function agendarCita(id_paciente, id_doctor, fecha, hora) { return postToRouter({ accion: "agendarCita", id_paciente, id_doctor, fecha, hora }); }
 
 /* ---------- UI refs ---------- */
 document.addEventListener("DOMContentLoaded", () => {
@@ -208,7 +208,6 @@ document.addEventListener("DOMContentLoaded", () => {
           state.especialidad = selectedEsp;
           speak(`Has seleccionado ${selectedEsp.nombre}. Buscando doctores disponibles...`);
           loadDoctores(selectedEsp.id_especialidad);
-          speak(`Escoge un doctor...`);
           state.step = "ask_doctor";
         } else speak("No identifiqué la especialidad. Di el nombre o elige en pantalla.");
         break;
@@ -291,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       case "confirm":
         if (isYes) {
-          agendarCita(state.paciente.id_paciente, state.doctor.id_doctor, state.fechaISO, state.horaISO,"Pendiente").then(res => {
+          agendarCita(state.paciente.id_paciente, state.doctor.id_doctor, state.fechaISO, state.horaISO).then(res => {
             if (res && res.id_cita) { speak("Cita agendada correctamente. ¿Deseas que te ayude en algo más?"); state.step = "after_confirm"; }
             else { appendMensaje("Error al agendar: " + JSON.stringify(res), "asistente"); speak("No pude guardar la cita. Intenta nuevamente o usa el formulario manual."); }
           });

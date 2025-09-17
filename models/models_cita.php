@@ -21,4 +21,7 @@ class Cita {
         $stmt->execute();
         return $this->conn->lastInsertId();
     }
+
+    
+    
 }

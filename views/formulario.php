@@ -49,6 +49,7 @@ $especialidades = $especialidadModel->listarTodas();
           <li class="nav-item"><a class="nav-link" href="main.php"><i class="bi bi-house"></i> Inicio</a></li>
           <li class="nav-item"><a class="nav-link" href="index.php"><i class="bi bi-mic-fill"></i> Asistente</a></li>
           <li class="nav-item"><a class="nav-link active" href="formulario.php"><i class="bi bi-calendar-event"></i> Reserva de citas</a></li>
+          <li class="nav-item"><a class="nav-link " href="registro.php"><i class="bi bi-person-plus"></i> Registro</a></li>
           <li class="nav-item"><a class="nav-link" href="ayuda.php"><i class="bi bi-info-circle"></i> Ayuda</a></li>
         </ul>
       </div>
@@ -67,19 +68,7 @@ $especialidades = $especialidadModel->listarTodas();
             <label class="form-label">DNI</label>
             <input id="dni" name="dni" type="text" class="form-control" placeholder="12345678" required />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Nombre completo</label>
-            <input id="nombre" name="nombre" type="text" class="form-control" placeholder="Juan Perez" required />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Correo</label>
-            <input id="correo" name="correo" type="email" class="form-control" placeholder="correo@ejemplo.com" required />
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Teléfono</label>
-            <input id="telefono" name="telefono" type="text" class="form-control" placeholder="999999999" required />
-          </div>
-
+          
           <!-- Especialidad -->
           <div class="col-md-6">
             <label class="form-label">Especialidad</label>
@@ -112,6 +101,7 @@ $especialidades = $especialidadModel->listarTodas();
         </div>
         <div class="mt-3">
           <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Registrar cita</button>
+          <a href="registro.php" class="btn btn-primary"><i class="bi bi-arrow-right-circle"></i> Registrarse </a>
         </div>
       </form>
     </div>
@@ -145,5 +135,37 @@ $especialidades = $especialidadModel->listarTodas();
       }
     });
   </script>
+  <script>
+    document.getElementById("formReserva").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("../controllers/reservarCita.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(res => {
+        if(res.status === "ok") {
+            // Modal éxito
+            alert("✅ " + res.mensaje);
+            this.reset();
+        } else if(res.status === "no_user") {
+            // Modal usuario no encontrado
+            if(confirm(res.mensaje + ". ¿Deseas registrarte?")) {
+                window.location.href = "registro.php";
+            }
+        } else {
+            alert("❌ Error: " + res.mensaje);
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("❌ Error al procesar la solicitud");
+    });
+});
+
+</script>
 </body>
 </html>

@@ -28,4 +28,16 @@ class Paciente {
         $stmt->execute();
         return $this->conn->lastInsertId();
     }
+    public function registrarPaciente($dni, $nombre, $correo, $telefono){
+    $sql = "INSERT INTO pacientes (dni, nombre, correo, telefono) VALUES (:dni, :nombre, :correo, :telefono)";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->bindParam(":dni", $dni);
+    $stmt->bindParam(":nombre", $nombre);
+    $stmt->bindParam(":correo", $correo);
+    $stmt->bindParam(":telefono", $telefono);
+    $stmt->execute();
+    return $this->conn->lastInsertId();
+}
+    
+    
 }

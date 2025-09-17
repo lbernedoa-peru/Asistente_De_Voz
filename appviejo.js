@@ -1,5 +1,6 @@
-// public/app.js
-const ROUTER_PATH = "../router.php";
+
+// public/app.js (solo se muestra la función postToRouter; el resto del archivo queda igual)
+const ROUTER_PATH = "../router.php"; // desde views/index.php
 
 /* ---------- Helpers fetch (form-urlencoded) ---------- */
 function postToRouter(params) {
@@ -11,19 +12,28 @@ function postToRouter(params) {
   })
     .then(response => response.text())
     .then(text => {
+      // intentar parsear JSON; si falla, devolver objeto con error y raw
       if (!text) return {};
-      try { return JSON.parse(text); } 
-      catch (err) { return { error: "Respuesta inválida del servidor", raw: text }; }
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error("Respuesta inválida del servidor (no JSON):", text);
+        return { error: "Respuesta inválida del servidor", raw: text };
+      }
     })
-    .catch(err => ({ error: err.message }));
+    .catch(err => {
+      console.error("Error en fetch:", err);
+      return { error: err.message };
+    });
 }
+
 
 /* ---------- API wrappers ---------- */
 function verificarPaciente(dni) { return postToRouter({ accion: "verificarPaciente", dni }); }
 function registrarPaciente(dni, nombre, correo, telefono) { return postToRouter({ accion: "registrarPaciente", dni, nombre, correo, telefono }); }
 function listarEspecialidades() { return postToRouter({ accion: "especialidades" }); }
 function listarDoctores(id_especialidad) { return postToRouter({ accion: "doctores", id_especialidad }); }
-function agendarCita(id_paciente, id_doctor, fecha, hora,estado) { return postToRouter({ accion: "agendarCita", id_paciente, id_doctor, fecha, hora , estado}); }
+function agendarCita(id_paciente, id_doctor, fecha, hora) { return postToRouter({ accion: "agendarCita", id_paciente, id_doctor, fecha, hora }); }
 
 /* ---------- UI refs ---------- */
 document.addEventListener("DOMContentLoaded", () => {
@@ -45,8 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     step: "idle",
     dni: null, paciente: null,
     especialidades: [], especialidad: null,
-    doctores: [], doctor: null, fechaISO: null, fechaHumana: null,
-    horaISO: null, horaHumana: null
+    doctores: [], doctor: null, fecha: null, hora: null
   };
 
   function appendMensaje(text, who = "asistente") {
@@ -56,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
     conv.appendChild(el);
     conv.scrollTop = conv.scrollHeight;
   }
-
   function speak(text) {
     appendMensaje(text, "asistente");
     const u = new SpeechSynthesisUtterance(text);
@@ -74,11 +82,13 @@ document.addEventListener("DOMContentLoaded", () => {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.onresult = (ev) => {
-      const text = ev.results[0][0].transcript.toLowerCase();
+      const text = ev.results[0][0].transcript;
       appendMensaje(text, "usuario");
       handleUserSpeech(text);
     };
-    recognition.onerror = (ev) => appendMensaje("Error reconocimiento: " + ev.error, "asistente");
+    recognition.onerror = (ev) => {
+      appendMensaje("Error reconocimiento: " + ev.error, "asistente");
+    };
   }
 
   /* start assistant */
@@ -94,9 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
     recognition.start();
   });
 
-  resetBtn.addEventListener("click", () => location.reload());
+  resetBtn.addEventListener("click", () => {
+    location.reload();
+  });
 
   manualVerify.addEventListener("click", () => {
+    // fallback manual registration + continue
     const dni = manualDni.value.trim();
     const nombre = manualNombre.value.trim();
     const correo = manualCorreo.value.trim();
@@ -119,16 +132,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* Handlers de pasos */
   function handleUserSpeech(text) {
+    text = (text || "").toLowerCase();
     const yes = ["si", "sí", "claro", "por favor", "afirmativo"];
     const no = ["no", "nop", "no gracias"];
+
     const isYes = yes.some(w => text.includes(w));
     const isNo = no.some(w => text.includes(w));
 
     switch (state.step) {
       case "confirm_start":
-        if (isYes) { state.step = "ask_dni"; speak("Perfecto. Dime tu número de DNI, por favor."); }
-        else if (isNo) { speak("Muy bien, cuando necesites algo vuelve a iniciarme."); state.step = "idle"; }
-        else speak("No entendí. ¿Deseas agendar una cita? Responde sí o no.");
+        if (isYes) {
+          state.step = "ask_dni";
+          speak("Perfecto. Dime tu número de DNI, por favor.");
+        } else if (isNo) {
+          speak("Muy bien, cuando necesites algo vuelve a iniciarme.");
+          state.step = "idle";
+        } else {
+          speak("No entendí. ¿Deseas agendar una cita? Responde sí o no.");
+        }
         break;
 
       case "ask_dni":
@@ -139,21 +160,27 @@ document.addEventListener("DOMContentLoaded", () => {
           verificarPaciente(state.dni).then(res => {
             if (res && res.id_paciente) {
               state.paciente = res;
-              speak(`Paciente encontrado: ${res.nombre || "usuario"}. ¿Qué especialidad deseas?`);
+              speak(`Paciente encontrado: ${res.nombre || res.nombre_completo || "usuario"}. ¿Qué especialidad deseas?`);
               loadEspecialidades();
               state.step = "ask_specialty";
             } else {
-              speak("No encuentro ese DNI. Dime tu número de DNI para registrarte.");
+              speak("No encuentro ese DNI. Dime tu numero de DNI para registrarte.");
               state.step = "registering_dni";
             }
           });
-        } else speak("No escuché un DNI claro. Dime solo los números de tu DNI, por favor.");
+        } else {
+          speak("No escuché un DNI claro. Dime solo los números de tu DNI, por favor.");
+        }
         break;
-
       case "registering_dni":
         const newDni = (text.match(/\d+/g) || []).join("");
-        if (newDni.length === 8) { state.dni = newDni; speak(`Anoté tu DNI como ${state.dni}. Ahora dime tu nombre completo.`); state.step = "registering_name"; }
-        else speak("El DNI debe tener 8 dígitos. Por favor repite tu número completo.");
+        if (newDni.length === 8) {
+          state.dni = newDni;
+          speak(`Anoté tu DNI como ${state.dni}. Ahora dime tu nombre completo.`);
+          state.step = "registering_name";
+        } else {
+          speak("El DNI debe tener 8 dígitos. Por favor repite tu número completo.");
+        }
         break;
 
       case "registering_name":
@@ -169,15 +196,29 @@ document.addEventListener("DOMContentLoaded", () => {
         break;
 
       case "registering_phone":
+        // guardar teléfono capturado
         state.register_telefono = (text.match(/\d+/g) || []).join("");
-        speak(`Por favor confirma tus datos: DNI: ${state.dni}, Nombre: ${state.register_nombre}, Correo: ${state.register_correo}, Teléfono: ${state.register_telefono}. ¿Son correctos?`);
-        state.step = "confirm_data";
+
+        // mostrar resumen antes de registrar
+        speak(`Por favor confirma tus datos. 
+            DNI: ${state.dni || "no registrado"}, 
+            Nombre: ${state.register_nombre || "no registrado"}, 
+            Correo: ${state.register_correo || "no registrado"}, 
+            Teléfono: ${state.register_telefono || "no registrado"}.
+            ¿Son correctos? Responde sí o no.`);
+
+        state.step = "confirm_data"; // 👈 nuevo paso
         break;
 
       case "confirm_data":
         if (isYes) {
           speak("Registrando tus datos...");
-          registrarPaciente(state.dni, state.register_nombre, state.register_correo, state.register_telefono).then(res => {
+          registrarPaciente(
+            state.dni || "",
+            state.register_nombre || "",
+            state.register_correo || "",
+            state.register_telefono || ""
+          ).then(res => {
             if (res && res.id_paciente) {
               state.paciente = { id_paciente: res.id_paciente, nombre: state.register_nombre, dni: state.dni };
               speak("Registro exitoso. Dime la especialidad que deseas.");
@@ -189,40 +230,79 @@ document.addEventListener("DOMContentLoaded", () => {
               manualForm.classList.remove("hidden");
             }
           });
-        } else if (isNo) { speak("Entiendo, dime qué dato deseas corregir: DNI, nombre, correo o teléfono."); state.step = "correct_field"; }
-        else speak("Por favor responde sí o no. ¿Los datos son correctos?");
+        } else if (isNo) {
+          speak("Entiendo, dime qué dato deseas corregir: DNI, nombre, correo o teléfono.");
+          state.step = "correct_field";
+        } else {
+          speak("Por favor responde sí o no. ¿Los datos son correctos?");
+        }
+        break;
+      case "correct_field":
+        if (text.includes("dni")) {
+          speak("Dime de nuevo tu número de DNI.");
+          state.step = "registering_dni";
+        } else if (text.includes("nombre")) {
+          speak("Dime de nuevo tu nombre completo.");
+          state.step = "registering_name";
+        } else if (text.includes("correo")) {
+          speak("Dime de nuevo tu correo electrónico.");
+          state.step = "registering_email";
+        } else if (text.includes("tel")) {
+          speak("Dime de nuevo tu número de teléfono.");
+          state.step = "registering_phone";
+        } else {
+          speak("No entendí qué dato quieres corregir. Elige entre DNI, nombre, correo o teléfono.");
+        }
         break;
 
-      case "correct_field":
-        if (text.includes("dni")) { speak("Dime de nuevo tu número de DNI."); state.step = "registering_dni"; }
-        else if (text.includes("nombre")) { speak("Dime de nuevo tu nombre completo."); state.step = "registering_name"; }
-        else if (text.includes("correo")) { speak("Dime de nuevo tu correo electrónico."); state.step = "registering_email"; }
-        else if (text.includes("tel")) { speak("Dime de nuevo tu número de teléfono."); state.step = "registering_phone"; }
-        else speak("No entendí qué dato quieres corregir. Elige entre DNI, nombre, correo o teléfono.");
-        break;
 
       case "ask_specialty":
-        if (!state.especialidades || state.especialidades.length === 0) return;
-        let selectedEsp = state.especialidades.find(e => text.includes((e.nombre || "").toLowerCase()));
-        if (selectedEsp) {
-          state.especialidad = selectedEsp;
-          speak(`Has seleccionado ${selectedEsp.nombre}. Buscando doctores disponibles...`);
-          loadDoctores(selectedEsp.id_especialidad);
-          speak(`Escoge un doctor...`);
-          state.step = "ask_doctor";
-        } else speak("No identifiqué la especialidad. Di el nombre o elige en pantalla.");
-        break;
+    let selectedEsp = null;
 
-      case "ask_doctor":
-        if (!state.doctores || state.doctores.length === 0) return;
-        const foundDoc = state.doctores.find(d => (d.nombre || "").toLowerCase().includes(text));
-        if (foundDoc) {
-          state.doctor = foundDoc;
-          speak(`Has seleccionado al doctor ${foundDoc.nombre}. Dime la fecha para tu cita, por ejemplo 13 de septiembre.`);
-          panel.innerHTML = "";
-          state.step = "ask_date";
-        } else if (text && text.trim() !== "") speak("No escuché el nombre del doctor. Repite o elige en pantalla.");
-        break;
+    if (text && text.trim() !== "") {
+        selectedEsp = state.especialidades.find(e =>
+            text.toLowerCase().includes((e.nombre || "").toLowerCase())
+        );
+    }
+
+    if (!selectedEsp && state.selectedEspecialidad) {
+        selectedEsp = state.especialidades.find(e => e.id === state.selectedEspecialidad);
+    }
+
+    if (selectedEsp) {
+        state.especialidad = selectedEsp;
+        speak(`Has seleccionado ${selectedEsp.nombre}. Buscando doctores disponibles...`);
+        state.selectedEspecialidad = null;
+
+        loadDoctores(selectedEsp.id); // Solo carga doctores en el panel
+        state.step = "ask_doctor";    // Paso activo para reconocer voz
+    } else {
+        speak("No identifiqué la especialidad. Di el nombre o elige en pantalla.");
+    }
+    break;
+
+case "ask_doctor":
+    if (!state.doctores || state.doctores.length === 0) {
+        // Espera a que los doctores se carguen
+        return;
+    }
+
+    // Selección por voz
+    const foundDoc = state.doctores.find(d =>
+        (d.nombre || "").toLowerCase().includes((text || "").toLowerCase())
+    );
+
+    if (foundDoc) {
+        state.doctor = foundDoc;
+        speak(`Has seleccionado al doctor ${foundDoc.nombre}. Dime la fecha para tu cita, por ejemplo 13 de septiembre.`);
+        panel.innerHTML = "";
+        state.step = "ask_date";
+    } else if (text && text.trim() !== "") {
+        // Si hubo entrada de voz pero no coincide
+        speak("No escuché el nombre del doctor. Repite o elige en pantalla.");
+    }
+    // La selección por clic sigue funcionando dentro de loadDoctores() mediante div.onclick
+    break;
 
       case "ask_date":
         const normalize = s => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -271,6 +351,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         break;
 
+
+
+
       case "ask_time":
         const timeMatch = text.match(/(\d{1,2}:\d{2})|(\d{1,2})/);
         if (timeMatch) {
@@ -291,17 +374,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
       case "confirm":
         if (isYes) {
-          agendarCita(state.paciente.id_paciente, state.doctor.id_doctor, state.fechaISO, state.horaISO,"Pendiente").then(res => {
-            if (res && res.id_cita) { speak("Cita agendada correctamente. ¿Deseas que te ayude en algo más?"); state.step = "after_confirm"; }
-            else { appendMensaje("Error al agendar: " + JSON.stringify(res), "asistente"); speak("No pude guardar la cita. Intenta nuevamente o usa el formulario manual."); }
+          speak("Agendando la cita...");
+          agendarCita(state.paciente.id_paciente, state.doctor.id_doctor, state.fechaISO, state.horaISO).then(res => {
+            if (res && res.id_cita) {
+              speak("Cita agendada correctamente. ¿Deseas que te ayude en algo más?");
+              state.step = "after_confirm";
+            } else {
+              appendMensaje("Error al agendar: " + JSON.stringify(res), "asistente");
+              speak("No pude guardar la cita. Intenta nuevamente o usa el formulario manual.");
+            }
           });
-        } else if (isNo) { speak("Cita cancelada. ¿Deseas algo más?"); state.step = "idle"; }
-        else speak("No entendí. ¿Deseas confirmar la cita? Di sí o no.");
+        } else if (isNo) {
+          speak("Cita cancelada. ¿Deseas algo más?");
+          state.step = "idle";
+        } else {
+          speak("No entendí. ¿Deseas confirmar la cita? Di sí o no.");
+        }
         break;
 
+
       case "after_confirm":
-        if (isYes) { speak("Perfecto. ¿Deseas agendar otra cita?"); state.step = "confirm_start"; }
-        else { speak("Muy bien. Volviendo a la pantalla principal."); state.step = "idle"; }
+        if (isYes) {
+          speak("Perfecto. ¿Deseas agendar otra cita?");
+          state.step = "confirm_start";
+        } else {
+          speak("Muy bien. Volviendo a la pantalla principal.");
+          state.step = "idle";
+        }
         break;
 
       default:
@@ -310,18 +409,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  /* Cargar especialidades y render en panel */
   function loadEspecialidades() {
     listarEspecialidades().then(res => {
       state.especialidades = res || [];
       panel.innerHTML = "";
-      if (state.especialidades.length === 0) { panel.innerHTML = "<div class='card'>No hay especialidades disponibles</div>"; return; }
+      if (state.especialidades.length === 0) {
+        panel.innerHTML = "<div class='card'>No hay especialidades disponibles</div>";
+        return;
+      }
       state.especialidades.forEach(e => {
         const div = document.createElement("div");
         div.className = "card";
         div.textContent = e.nombre;
         div.onclick = () => {
+          // seleccionar
           state.especialidad = e;
-          speak(`Seleccionaste ${e.nombre}, ahora selecciona un doctor.`);
+          speak(`Seleccionaste ${e.nombre}, ahora selecciona 
+            un doctor.`);
           loadDoctores(e.id_especialidad);
           state.step = "ask_doctor";
         };
@@ -331,27 +436,69 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadDoctores(id_especialidad) {
-    listarDoctores(id_especialidad).then(res => {
-      state.doctores = res || [];
-      panel.innerHTML = "<h4>Doctores disponibles:</h4>";
-      if (!state.doctores || state.doctores.length === 0) { panel.innerHTML += "<div class='card'>No hay doctores disponibles</div>"; return; }
-      state.doctores.forEach(d => {
-        const div = document.createElement("div");
-        div.className = "card";
-        div.textContent = d.nombre;
-        div.onclick = () => {
-          state.doctor = d;
-          speak(`Seleccionaste al doctor ${d.nombre}. Indica la fecha de la cita diciendo por ejemplo 15 de setiembre.`);
-          panel.innerHTML = "";
-          state.step = "ask_date";
-        };
-        panel.appendChild(div);
-      });
+  listarDoctores(id_especialidad).then(res => {
+    state.doctores = res || [];
+    panel.innerHTML = "<h4>Doctores disponibles:</h4>";
+
+    if (state.doctores.length === 0) {
+      panel.innerHTML += "<div class='card'>No hay doctores disponibles</div>";
+      return;
+    }
+
+    state.doctores.forEach(d => {
+      const div = document.createElement("div");
+      div.className = "card";
+      div.textContent = d.nombre;
+
+      // Selección por clic
+      div.onclick = () => {
+        state.doctor = d;
+        speak(`Seleccionaste al doctor ${d.nombre}. Indica la fecha de la cita diciendo por ejemplo 15 de setiembre.`);
+        panel.innerHTML = "";
+        state.step = "ask_date";
+      };
+
+      panel.appendChild(div);
     });
+  });
+}
+
+// Este listener se activa mientras el paso sea "ask_doctor"
+function handleVoiceDoctorSelection(text) {
+  if (state.step !== "ask_doctor" || !state.doctores) return;
+
+  const foundDoc = state.doctores.find(d =>
+    (d.nombre || "").toLowerCase().includes((text || "").toLowerCase())
+  );
+
+  if (foundDoc) {
+    state.doctor = foundDoc;
+    speak(`Has seleccionado al doctor ${foundDoc.nombre}. Dime la fecha para tu cita, por ejemplo 13 de septiembre.`);
+    panel.innerHTML = "";
+    state.step = "ask_date";
+  } else {
+    speak("No escuché el nombre del doctor. Repite o elige en pantalla.");
+    // No reiniciamos loadDoctores, solo seguimos escuchando
+  }
+}
+
+// Ejemplo de cómo integrar con tu función de reconocimiento de voz:
+listenForVoice(handleVoiceDoctorSelection);
+
+
+  // Función para capitalizar la primera letra de cada palabra en una cadena
+  function capitalizeWords(str) {
+    return str
+      .split(" ") // separamos las palabras
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // capitalizamos cada palabra
+      .join(" "); // unimos de nuevo
   }
 
-  function capitalizeWords(str) { return str.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" "); }
-
+  // Exponer funciones en window para debug/test desde consola
   window._asistente = { speak, loadEspecialidades, loadDoctores, verificarPaciente };
+
+  // Inicial: mostrar saludo breve en texto (no habla hasta iniciar)
   appendMensaje("Hola, presiona 'Iniciar asistente' para comenzar.", "asistente");
+
 });
+
