@@ -26,11 +26,12 @@ class Doctor {
     }
 
     public function listarDoctores() {
-        $sql = "SELECT id_doctor, nombre, id_especialidad FROM doctores ORDER BY nombre";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $sql = "SELECT id_doctor, nombre, id_especialidad, genero FROM doctores ORDER BY nombre";
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
     
     
     public function listarPorEspecialidad($idEspecialidad){

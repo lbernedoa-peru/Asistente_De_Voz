@@ -25,8 +25,9 @@ class ControlAsistente {
         return $this->model->getDoctoresByEspecialidad($id_especialidad);
     }
 
-    public function agendarCita($id_paciente, $id_doctor, $fecha, $hora) {
-        return $this->model->insertCita($id_paciente, $id_doctor, $fecha, $hora);
-    }
+    public function agendarCita($id_paciente, $id_doctor, $fecha, $hora, $estado = "Pendiente") {
+    return $this->model->insertCita($id_paciente, $id_doctor, $fecha, $hora, $estado);
+}
+
     
 }

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Flujo del Asistente de Voz - Agendar Cita</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 900px;
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .node {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      margin: 30px 0;
+      padding: 20px;
+      border-radius: 12px;
+      background: #e3f2fd;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .node.active {
+      display: flex;
+    }
+
+    .options {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-yes { background: #4caf50; color: white; }
+    .btn-no { background: #f44336; color: white; }
+    .btn-next { background: #2196f3; color: white; }
+
+    .btn:hover { opacity: 0.8; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Flujo del Asistente de Voz</h1>
+
+    <!-- Inicio -->
+    <div class="node active" id="start">
+      <h2>👋 Bienvenido al asistente de voz</h2>
+      <p>¿Desea agendar una cita?</p>
+      <div class="options">
+        <button class="btn btn-yes" onclick="goTo('dni')">Sí</button>
+        <button class="btn btn-no" onclick="goTo('fin')">No</button>
+      </div>
+    </div>
+
+    <!-- DNI -->
+    <div class="node" id="dni">
+      <h2>📄 Ingrese su DNI</h2>
+      <p>¿El paciente ya está registrado?</p>
+      <div class="options">
+        <button class="btn btn-yes" onclick="goTo('cargar')">Sí</button>
+        <button class="btn btn-no" onclick="goTo('registrar')">No</button>
+      </div>
+    </div>
+
+    <!-- Cargar datos -->
+    <div class="node" id="cargar">
+      <h2>📂 Datos cargados</h2>
+      <p>Se han recuperado sus datos del sistema.</p>
+      <button class="btn btn-next" onclick="goTo('especialidad')">Continuar</button>
+    </div>
+
+    <!-- Registrar paciente -->
+    <div class="node" id="registrar">
+      <h2>📝 Registro de paciente</h2>
+      <p>Ingrese sus datos personales para el registro.</p>
+      <button class="btn btn-next" onclick="goTo('especialidad')">Continuar</button>
+    </div>
+
+    <!-- Especialidad -->
+    <div class="node" id="especialidad">
+      <h2>🏥 Selección de especialidad</h2>
+      <p>Elija la especialidad médica/dental.</p>
+      <button class="btn btn-next" onclick="goTo('doctor')">Continuar</button>
+    </div>
+
+    <!-- Doctor -->
+    <div class="node" id="doctor">
+      <h2>👨‍⚕️ Selección de doctor</h2>
+      <p>Seleccione el doctor disponible.</p>
+      <button class="btn btn-next" onclick="goTo('fecha')">Continuar</button>
+    </div>
+
+    <!-- Fecha -->
+    <div class="node" id="fecha">
+      <h2>📅 Selección de fecha y hora</h2>
+      <p>Elija la fecha y hora de la cita.</p>
+      <button class="btn btn-next" onclick="goTo('resumen')">Continuar</button>
+    </div>
+
+    <!-- Resumen -->
+    <div class="node" id="resumen">
+      <h2>📋 Resumen de la cita</h2>
+      <p>Revise los datos de la cita.</p>
+      <p>¿Desea confirmar la cita?</p>
+      <div class="options">
+        <button class="btn btn-yes" onclick="goTo('confirmado')">Sí</button>
+        <button class="btn btn-no" onclick="goTo('cancelado')">No</button>
+      </div>
+    </div>
+
+    <!-- Confirmado -->
+    <div class="node" id="confirmado">
+      <h2>✅ Cita agendada</h2>
+      <p>Su cita ha sido registrada exitosamente.</p>
+      <button class="btn btn-next" onclick="goTo('ayuda')">Más ayuda</button>
+    </div>
+
+    <!-- Cancelado -->
+    <div class="node" id="cancelado">
+      <h2>❌ Cita cancelada</h2>
+      <p>No se realizó el registro de la cita.</p>
+      <button class="btn btn-next" onclick="goTo('ayuda')">Más ayuda</button>
+    </div>
+
+    <!-- Fin -->
+    <div class="node" id="fin">
+      <h2>👋 Fin del asistente</h2>
+      <p>No se registró ninguna cita.</p>
+      <button class="btn btn-next" onclick="goTo('ayuda')">Más ayuda</button>
+    </div>
+
+    <!-- Ayuda -->
+    <div class="node" id="ayuda">
+      <h2>❓ ¿Necesita más ayuda?</h2>
+      <div class="options">
+        <button class="btn btn-yes" onclick="goTo('start')">Sí</button>
+        <button class="btn btn-no" onclick="goTo('fin')">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function goTo(nextId) {
+      document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+      document.getElementById(nextId).classList.add('active');
+    }
+  </script>
+</body>
+</html>

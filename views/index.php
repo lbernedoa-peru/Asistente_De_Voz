@@ -27,14 +27,14 @@
       margin-bottom: 40px;
     }
     #conversacion {
-      background: #f1f7fc;
-      padding: 15px;
-      border-radius: 6px;
-      min-height: 500px;
-      max-height: 300px;
-      overflow-y: auto;
-      font-size: 0.95rem;
-    }
+  background: #f1f7fc;
+  padding: 15px;
+  border-radius: 6px;
+  min-height: 20vh;   /* empieza ocupando 20% de la altura visible */
+  max-height: 60vh;   /* nunca sobrepasa el 60% de la altura de la pantalla */
+  overflow-y: auto;   /* si hay mucho texto, agrega scroll */
+  font-size: 0.95rem;
+}
     .mensaje { margin: 6px 0; }
     .asistente { color: #0d6efd; font-weight: 500; }
     .usuario { color: #333; }
